@@ -31,12 +31,14 @@ class Radio:
         self.__send_play_end_radio(self.current_track, self.station_tracks.batch_id)
 
         # get next index
+        
         self.index += 1
         if self.index >= len(self.station_tracks.sequence):
             # get next 5 tracks. Set index to 0
             self.__update_radio_batch(self.current_track.track_id)
 
         # setup next track
+        
         self.current_track = self.__update_current_track()
         return self.current_track
 
