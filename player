@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from time import sleep
+from radio import Radio
+from yandex_music import Client
+import threading
+import sys
+import vlc
+
+TOKEN = 'y0_AgAAAAADYi8aAAG8XgAAAADYl7OgqniMheVfQD2c27VItFcudoNqeJE'
+
+darktheme = '''
+List{
+    background-color: gray;
+}
+App{
+    background-color: gray;
+}
+QScrollBar{
+    width: 15px;
+    background-color: gray;
+}
+QPlainTextEdit{
+    background-color: black;
+    font: 700 12pt \"Arial\";
+    padding: 8px;
+    color: green;
+    border-radius: 10px;
+}
+QListWidget{
+    background-color: black;
+    font: 700 12pt \"Arial\";
+    padding: 8px;
+    color: green;
+    border-radius: 10px;
+    selection-color: white;
+    selection-background-color: blue;
+}
+QPushButton{
+    background-color: blue;
+}
+'''
+class App(QMainWindow):
+    mysignal = pyqtSignal(str, name='mySignal')
+    stationNum = 0
+
+    def __init__(self):
+        super(App, self).__init__()
+        self.title = 'Yandex Radio'
+        self.left = 10
+        self.top = 10
+        self.width = 700
+        self.height = 200
+        self.inst = vlc.Instance('--quiet')
+        self.player = self.inst.media_player_new()
+        self.player.audio_set_volume(50)
+        self.proc = threading.Thread(target=self.play, args=())
+        self.mysignal.connect(self.mySignalHandler)
+        self.playNext = False
+        self.pausePlayer = False
+        self.exitApp = False
+        self.Position = self.frameGeometry().topLeft()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.setStyleSheet(darktheme)
+        self.setFixedSize(self.width, self.height)
+        self.setWindowFlag(Qt.WindowCloseButtonHint, False)
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        self.Geometry = self.frameGeometry()
+        self.Geometry.moveCenter(centerPoint)
+        self.Position = self.Geometry.topLeft()
+        self.move(self.Position)
+
+        self.list = List()
+
+        self.oldPos = self.pos()
+
+        self.lcd = QLCDNumber(self)
+        self.lcd.setSegmentStyle(QLCDNumber.Flat)
+        self.lcd.setSmallDecimalPoint(False)
+        self.lcd.setDigitCount(3)
+        self.lcd.display(50)
+        self.lcd.move(555, 150)
+        self.lcd.setFrameStyle(QFrame.Panel | QFrame.Plain)
+        self.lcd.setLineWidth(0)
+
+        self.slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider.setRange(0, 100)
+        self.slider.setSingleStep(1)
+        self.slider.setValue(50)
+        self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self.slider.move(480, 150)
+
+        self.textbox = QPlainTextEdit(self)
+        self.textbox.move(10, 5)
+        self.textbox.resize(680, 130)
+        self.textbox.setStyleSheet(darktheme)
+        self.textbox.setDisabled(True)
+
+        self.buttonPlay = QPushButton('Play', self)
+        self.buttonPlay.move(15, 150)
+        self.buttonPlay.setStyleSheet(darktheme)
+
+        self.buttonPause = QPushButton('Pause', self)
+        self.buttonPause.move(130, 150)
+        self.buttonPause.setStyleSheet(darktheme)
+
+        self.buttonNext = QPushButton('Next', self)
+        self.buttonNext.move(245, 150)
+        self.buttonNext.setStyleSheet(darktheme)
+
+        self.buttonExit = QPushButton('Exit', self)
+        self.buttonExit.move(360, 150)
+        self.buttonExit.setStyleSheet(darktheme)
+
+        self.buttonList = QPushButton('L', self)
+        self.buttonList.move(650, 150)
+        self.buttonList.resize(30, 30)
+        self.buttonList.setStyleSheet(darktheme)
+
+        self.buttonNext.clicked.connect(self.onClickNext)
+        self.buttonPlay.clicked.connect(self.onClickPlay)
+        self.buttonExit.clicked.connect(self.onClickExit)
+        self.buttonPause.clicked.connect(self.onClickPause)
+        self.buttonList.clicked.connect(self.onClickList)
+        
+        self.slider.valueChanged.connect(self.updateSlider)
+
+    def mousePressEvent(self, event):
+        self.oldPos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        delta = QPoint (event.globalPos() - self.oldPos)
+        x = event.x()
+        y = event.y()
+        self.move(self.x() + delta.x(), self.y() + delta.y())
+        self.oldPos = event.globalPos()
+        isvisible = self.list.isVisible()
+        if isvisible == True:
+            pos = QPoint(self.geometry().x(), self.geometry().y()+210)
+            self.list.move(pos)
+            self.list.show()
+
+    @pyqtSlot()
+    def updateSlider(self):
+        self.player.audio_set_volume(self.slider.value())
+        self.lcd.display(self.slider.value())
+
+    def mySignalHandler(self, data):
+        if data == 'NEW':
+            self.textbox.clear()
+            return
+        self.textbox.appendPlainText(data)
+
+    def play(self):
+        client = Client(TOKEN)
+        radio = Radio(client)
+        while self.exitApp == False:
+            try:
+                _stations = client.rotor_stations_list()
+                if App.stationNum == len(_stations):
+                    _station_id = 'user:onyourwave'
+                    _station_from = None
+                else:
+                    _station = _stations[App.stationNum].station
+                    _station_id = f'{_station.id.type}:{_station.id.tag}'
+                    _station_from = _station.id_for_from
+                track = radio.start_radio(_station_id, _station_from)
+                track = radio.play_next()
+                self.mySignal.emit('NEW')
+                if App.stationNum == len(_stations):
+                    self.mySignal.emit('Station:  ' + ' My wave')
+                else:
+                    self.mySignal.emit('Station:  ' + _station.name)
+                self.mySignal.emit(
+                    'Artist:     ' + ' | '.join(a.name for a in track.artists))
+                self.mySignal.emit(
+                    'Album:   ' + ' | '.join(a.title for a in track.albums))
+                self.mySignal.emit('Title:       ' + track.title)
+                try:
+                    if track.download_info is None:
+                        track.get_download_info()
+                        for info in track.download_info:
+                            if info.codec == 'mp3' and info.bitrate_in_kbps == 320:
+                                link = info.get_direct_link()
+                                break
+                except Exception as e:
+                    print('Error:', e)
+                    sleep(1)
+                media = self.inst.media_new(link)
+                self.player.set_media(media)
+                self.player.play()
+                while True:
+                    state = self.player.get_state()
+                    if state == vlc.State.Ended or self.playNext == True or self.exitApp == True:
+                        self.playNext = False
+                        break
+                    sleep(1)
+                self.player.stop()
+            except Exception as e:
+                print('Error:', e)
+                sleep(1)
+        app.exit()
+
+    @pyqtSlot()
+    def onClickList(self):
+        isvisible = self.list.isVisible()
+        if isvisible == False:
+            pos = QPoint(self.geometry().x(), self.geometry().y()+210)
+            self.list.move(pos)
+            self.list.show()
+        else:
+            self.list.hide()
+
+    @pyqtSlot()
+    def onClickPlay(self):
+        self.buttonPlay.setEnabled(False)
+        self.proc.start()
+
+    @pyqtSlot()
+    def onClickNext(self):
+        self.playNext = True
+
+    @pyqtSlot()
+    def onClickExit(self):
+        self.exitApp = True
+        app.exit()
+
+    @pyqtSlot()
+    def onClickPause(self):
+        if self.pausePlayer == False:
+            self.player.pause()
+            self.pausePlayer = True
+            self.buttonPause.setText('Play')
+        else:
+            self.player.play()
+            self.pausePlayer = False
+            self.buttonPause.setText('Pause')
+
+class List(QDialog):
+
+    def __init__(self):
+        super(List, self).__init__()
+        self.resize(700, 200)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.listWidget = QListWidget(self)
+        self.listWidget.move(10, 5)
+        self.listWidget.resize(680, 190)
+        client = Client(TOKEN)
+        _stations = client.rotor_stations_list()
+        for i in range(len(_stations)):
+            _station = _stations[i].station
+            item = QListWidgetItem()
+            item.setText(str(i+1) + "   " + _station.name)
+            self.listWidget.insertItem(i, item)
+        item = QListWidgetItem()
+        item.setText(str(len(_stations)+1) + "   " + 'My wave')
+        self.listWidget.insertItem(len(_stations), item)
+        self.listWidget.itemDoubleClicked.connect(self.Clicked)
+
+    def Clicked(self, item):
+        num = self.listWidget.row(item)
+        App.stationNum = num
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    app.setStyleSheet(darktheme)
+    application = App()
+    application.show()
+    app.exec()
