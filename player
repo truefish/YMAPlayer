@@ -11,7 +11,7 @@ import threading
 import sys
 import vlc
 
-TOKEN = 'y0_AgAAAAADYi8aAAG8XgAAAADYl7OgqniMheVfQD2c27VItFcudoNqeJE'
+TOKEN = 'y0_*****************************************************'
 
 darktheme = '''
 List{
