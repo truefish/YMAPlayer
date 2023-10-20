@@ -38,7 +38,7 @@ QListWidget{
     color: green;
     border-radius: 10px;
     selection-color: white;
-    selection-background-color: darkgreen;
+    selection-background-color: darkblue;
 }
 QPushButton{
     background-color: blue;
