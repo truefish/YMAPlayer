@@ -13,6 +13,8 @@ import vlc
 
 TOKEN = 'y0_A************************************************************'
 
+
+
 darktheme = '''
 List{
     background-color: gray;
@@ -44,6 +46,8 @@ QPushButton{
     background-color: blue;
 }
 '''
+
+
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     stationNum = 0
@@ -271,6 +275,7 @@ class List(QDialog):
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 190)
+
         client = Client(TOKEN)
         _stations = client.rotor_stations_list()
         for i in range(len(_stations)):
