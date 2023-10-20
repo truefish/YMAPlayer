@@ -11,7 +11,7 @@ import threading
 import sys
 import vlc
 
-TOKEN = 'y0_********************************************************************'
+TOKEN = 'y0_AgAAAAADYi8aAAG8XgAAAADYl7OgqniMheVfQD2c27VItFcudoNqeJE'
 
 darktheme = '''
 List{
@@ -44,8 +44,6 @@ QPushButton{
     background-color: blue;
 }
 '''
-
-
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     stationNum = 0
@@ -136,6 +134,9 @@ class App(QMainWindow):
         self.positionslider.move(15,200)
         self.positionslider.resize(665,30)
 
+        self.positionslider.sliderMoved.connect(self.set_position)
+        self.positionslider.sliderPressed.connect(self.set_position)
+
         self.buttonNext.clicked.connect(self.onClickNext)
         self.buttonPlay.clicked.connect(self.onClickPlay)
         self.buttonExit.clicked.connect(self.onClickExit)
@@ -158,6 +159,10 @@ class App(QMainWindow):
             pos = QPoint(self.geometry().x(), self.geometry().y()+260)
             self.list.move(pos)
             self.list.show()
+
+    def set_position(self):
+        pos = self.positionslider.value()
+        self.player.set_position(pos / 1000.0)
 
     @pyqtSlot()
     def updateSlider(self):
