@@ -11,7 +11,7 @@ import threading
 import sys
 import vlc
 
-TOKEN = 'y0_*****************************************************'
+TOKEN = 'y0_**************************************************************'
 
 darktheme = '''
 List{
@@ -44,6 +44,7 @@ QPushButton{
     background-color: blue;
 }
 '''
+
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     stationNum = 0
@@ -54,7 +55,7 @@ class App(QMainWindow):
         self.left = 10
         self.top = 10
         self.width = 700
-        self.height = 200
+        self.height = 250
         self.inst = vlc.Instance('--quiet')
         self.player = self.inst.media_player_new()
         self.player.audio_set_volume(50)
@@ -127,6 +128,12 @@ class App(QMainWindow):
         self.buttonList.move(650, 150)
         self.buttonList.resize(30, 30)
         self.buttonList.setStyleSheet(darktheme)
+        
+        self.positionslider = QSlider(Qt.Orientation.Horizontal, self)
+        self.positionslider.setToolTip("Position")
+        self.positionslider.setMaximum(1000)
+        self.positionslider.move(15,200)
+        self.positionslider.resize(665,30)
 
         self.buttonNext.clicked.connect(self.onClickNext)
         self.buttonPlay.clicked.connect(self.onClickPlay)
@@ -147,7 +154,7 @@ class App(QMainWindow):
         self.oldPos = event.globalPos()
         isvisible = self.list.isVisible()
         if isvisible == True:
-            pos = QPoint(self.geometry().x(), self.geometry().y()+210)
+            pos = QPoint(self.geometry().x(), self.geometry().y()+260)
             self.list.move(pos)
             self.list.show()
 
@@ -201,6 +208,8 @@ class App(QMainWindow):
                 self.player.set_media(media)
                 self.player.play()
                 while True:
+                    media_pos = int(self.player.get_position() * 1000)
+                    self.positionslider.setValue(media_pos)
                     state = self.player.get_state()
                     if state == vlc.State.Ended or self.playNext == True or self.exitApp == True:
                         self.playNext = False
@@ -216,7 +225,7 @@ class App(QMainWindow):
     def onClickList(self):
         isvisible = self.list.isVisible()
         if isvisible == False:
-            pos = QPoint(self.geometry().x(), self.geometry().y()+210)
+            pos = QPoint(self.geometry().x(), self.geometry().y()+260)
             self.list.move(pos)
             self.list.show()
         else:
@@ -256,6 +265,7 @@ class List(QDialog):
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 190)
+
         client = Client(TOKEN)
         _stations = client.rotor_stations_list()
         for i in range(len(_stations)):
