@@ -11,9 +11,7 @@ import threading
 import sys
 import vlc
 
-TOKEN = 'y0_A************************************************************'
-
-
+TOKEN = 'y0_AgAAAAADYi8aAAG8XgAAAADYl7OgqniMheVfQD2c27VItFcudoNqeJE'
 
 darktheme = '''
 List{
@@ -46,8 +44,6 @@ QPushButton{
     background-color: blue;
 }
 '''
-
-
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     stationNum = 0
@@ -73,6 +69,15 @@ class App(QMainWindow):
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.round_widget = QWidget(self)
+        self.round_widget.resize(700, 250)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -266,16 +271,24 @@ class App(QMainWindow):
             self.pausePlayer = False
             self.buttonPause.setText('Pause')
 
-class List(QDialog):
+class List(QMainWindow):
 
     def __init__(self):
         super(List, self).__init__()
-        self.resize(700, 200)
+        self.resize(700, 250)
         self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.round_widget = QWidget(self)
+        self.round_widget.resize(700, 250)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
-        self.listWidget.resize(680, 190)
-
+        self.listWidget.resize(680, 240)
         client = Client(TOKEN)
         _stations = client.rotor_stations_list()
         for i in range(len(_stations)):
