@@ -7,11 +7,12 @@ from PyQt5.QtCore import *
 from time import sleep
 from radio import Radio
 from yandex_music import Client
+
 import threading
 import sys
 import vlc
 
-TOKEN = 'y0_A********************************************************'
+TOKEN = 'y0_A*********************************************************************'
 
 darktheme = '''
 List{
@@ -44,6 +45,7 @@ QPushButton{
     background-color: blue;
 }
 '''
+
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     stationNum = 0
@@ -78,6 +80,7 @@ class App(QMainWindow):
             background-color: gray;
             """
         )
+        
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -137,11 +140,19 @@ class App(QMainWindow):
         self.buttonList.resize(30, 30)
         self.buttonList.setStyleSheet(darktheme)
         
+        self.currentTimeLabel = QLabel('00:00',self)
+        self.currentTimeLabel.move(15, 200)
+        self.currentTimeLabel.resize(50, 30)
+        
+        self.durationLabel = QLabel('00:00',self)
+        self.durationLabel.move(650, 200)
+        self.durationLabel.resize(50, 30)
+
         self.positionslider = QSlider(Qt.Orientation.Horizontal, self)
         self.positionslider.setToolTip("Position")
         self.positionslider.setMaximum(1000)
-        self.positionslider.move(15,200)
-        self.positionslider.resize(665,30)
+        self.positionslider.move(60,200)
+        self.positionslider.resize(580,30)
 
         self.positionslider.sliderMoved.connect(self.set_position)
         self.positionslider.sliderPressed.connect(self.set_position)
@@ -187,6 +198,7 @@ class App(QMainWindow):
     def play(self):
         client = Client(TOKEN)
         radio = Radio(client)
+        
         while self.exitApp == False:
             try:
                 _stations = client.rotor_stations_list()
@@ -222,7 +234,14 @@ class App(QMainWindow):
                 media = self.inst.media_new(link)
                 self.player.set_media(media)
                 self.player.play()
+                
                 while True:
+                    currentTime = vlc.libvlc_media_player_get_time(self.player)
+                    minutes, seconds = divmod(currentTime / 1000, 60)
+                    self.currentTimeLabel.setText(f'{minutes:0>2.0f}:{seconds:0>2.0f}')
+                    duration = vlc.libvlc_media_player_get_length(self.player)
+                    minutes, seconds = divmod(duration / 1000, 60)
+                    self.durationLabel.setText(f'{minutes:0>2.0f}:{seconds:0>2.0f}')
                     media_pos = int(self.player.get_position() * 1000)
                     self.positionslider.setValue(media_pos)
                     state = self.player.get_state()
@@ -286,6 +305,7 @@ class List(QMainWindow):
             background-color: gray;
             """
         )
+        
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 240)
@@ -311,4 +331,3 @@ if __name__ == '__main__':
     application = App()
     application.show()
     app.exec()
-
