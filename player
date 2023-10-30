@@ -12,7 +12,7 @@ import threading
 import sys
 import vlc
 
-TOKEN = 'y0_A*********************************************************************'
+TOKEN = 'y0_A*****************************************************************'
 
 darktheme = '''
 List{
@@ -80,7 +80,7 @@ class App(QMainWindow):
             background-color: gray;
             """
         )
-        
+
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -231,19 +231,24 @@ class App(QMainWindow):
                 except Exception as e:
                     print('Error:', e)
                     sleep(1)
+
                 media = self.inst.media_new(link)
                 self.player.set_media(media)
                 self.player.play()
-                
+
                 while True:
+
                     currentTime = vlc.libvlc_media_player_get_time(self.player)
                     minutes, seconds = divmod(currentTime / 1000, 60)
-                    self.currentTimeLabel.setText(f'{minutes:0>2.0f}:{seconds:0>2.0f}')
+                    self.currentTimeLabel.setText(str(int(minutes)) + ' : ' + str(int(seconds)))
+
                     duration = vlc.libvlc_media_player_get_length(self.player)
                     minutes, seconds = divmod(duration / 1000, 60)
-                    self.durationLabel.setText(f'{minutes:0>2.0f}:{seconds:0>2.0f}')
+                    self.durationLabel.setText(str(int(minutes)) + ':' + str(int(seconds)))
+
                     media_pos = int(self.player.get_position() * 1000)
                     self.positionslider.setValue(media_pos)
+
                     state = self.player.get_state()
                     if state == vlc.State.Ended or self.playNext == True or self.exitApp == True:
                         self.playNext = False
@@ -294,6 +299,7 @@ class List(QMainWindow):
 
     def __init__(self):
         super(List, self).__init__()
+        
         self.resize(700, 250)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -326,6 +332,7 @@ class List(QMainWindow):
         App.stationNum = num
 
 if __name__ == '__main__':
+    
     app = QApplication(sys.argv)
     app.setStyleSheet(darktheme)
     application = App()
