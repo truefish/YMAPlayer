@@ -45,9 +45,11 @@ QPushButton{
     background-color: blue;
 }
 '''
-
+            
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
+    progress = pyqtSignal()
+
     stationNum = 0
 
     def __init__(self):
@@ -62,6 +64,7 @@ class App(QMainWindow):
         self.player.audio_set_volume(50)
         self.proc = threading.Thread(target=self.play, args=())
         self.mysignal.connect(self.mySignalHandler)
+        self.progress.connect(self.updateProgressBar)
         self.playNext = False
         self.pausePlayer = False
         self.exitApp = False
@@ -164,7 +167,17 @@ class App(QMainWindow):
         self.buttonList.clicked.connect(self.onClickList)
         
         self.slider.valueChanged.connect(self.updateSlider)
-
+                
+    def updateProgressBar(self):
+        currentTime = vlc.libvlc_media_player_get_time(self.player)
+        minutes1, seconds1 = divmod(currentTime / 1000, 60)
+        self.currentTimeLabel.setText(f'{minutes1:0>2.0f}:{seconds1:0>2.0f}')
+        duration = vlc.libvlc_media_player_get_length(self.player)
+        minutes2, seconds2 = divmod(duration / 1000, 60)
+        self.durationLabel.setText(f'{minutes2:0>2.0f}:{seconds2:0>2.0f}')
+        media_pos = int(self.player.get_position() * 1000)
+        self.positionslider.setValue(media_pos)
+ 
     def mousePressEvent(self, event):
         self.oldPos = event.globalPos()
 
@@ -235,24 +248,12 @@ class App(QMainWindow):
                 media = self.inst.media_new(link)
                 self.player.set_media(media)
                 self.player.play()
-
                 while True:
-
-                    currentTime = vlc.libvlc_media_player_get_time(self.player)
-                    minutes, seconds = divmod(currentTime / 1000, 60)
-                    self.currentTimeLabel.setText(str(int(minutes)) + ' : ' + str(int(seconds)))
-
-                    duration = vlc.libvlc_media_player_get_length(self.player)
-                    minutes, seconds = divmod(duration / 1000, 60)
-                    self.durationLabel.setText(str(int(minutes)) + ':' + str(int(seconds)))
-
-                    media_pos = int(self.player.get_position() * 1000)
-                    self.positionslider.setValue(media_pos)
-
                     state = self.player.get_state()
                     if state == vlc.State.Ended or self.playNext == True or self.exitApp == True:
                         self.playNext = False
                         break
+                    self.progress.emit()
                     sleep(1)
                 self.player.stop()
             except Exception as e:
@@ -332,7 +333,6 @@ class List(QMainWindow):
         App.stationNum = num
 
 if __name__ == '__main__':
-    
     app = QApplication(sys.argv)
     app.setStyleSheet(darktheme)
     application = App()
