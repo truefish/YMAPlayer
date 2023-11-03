@@ -123,8 +123,8 @@ class App(QMainWindow):
         self.labelPix = QLabel(self)
         self.pixmap = QPixmap()
         self.labelPix.setPixmap(self.pixmap)
-        self.labelPix.move(580,20)
-        self.labelPix.resize(100,100)
+        self.labelPix.move(570,10)
+        self.labelPix.resize(120,120)
         
         self.buttonPlay = QPushButton('Play', self)
         self.buttonPlay.move(15, 150)
