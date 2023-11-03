@@ -11,8 +11,9 @@ from yandex_music import Client
 import threading
 import sys
 import vlc
+from urllib import request
 
-TOKEN = 'y0_A*****************************************************************'
+TOKEN = 'y0_A***********************************************************'
 
 darktheme = '''
 List{
@@ -49,7 +50,6 @@ QPushButton{
 class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     progress = pyqtSignal()
-
     stationNum = 0
 
     def __init__(self):
@@ -83,7 +83,6 @@ class App(QMainWindow):
             background-color: gray;
             """
         )
-
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -97,7 +96,6 @@ class App(QMainWindow):
         self.move(self.Position)
 
         self.list = List()
-
         self.oldPos = self.pos()
 
         self.lcd = QLCDNumber(self)
@@ -118,10 +116,16 @@ class App(QMainWindow):
 
         self.textbox = QPlainTextEdit(self)
         self.textbox.move(10, 5)
-        self.textbox.resize(680, 130)
+        self.textbox.resize(550, 130)
         self.textbox.setStyleSheet(darktheme)
         self.textbox.setDisabled(True)
-
+        
+        self.labelPix = QLabel(self)
+        self.pixmap = QPixmap()
+        self.labelPix.setPixmap(self.pixmap)
+        self.labelPix.move(580,20)
+        self.labelPix.resize(100,100)
+        
         self.buttonPlay = QPushButton('Play', self)
         self.buttonPlay.move(15, 150)
         self.buttonPlay.setStyleSheet(darktheme)
@@ -167,7 +171,7 @@ class App(QMainWindow):
         self.buttonList.clicked.connect(self.onClickList)
         
         self.slider.valueChanged.connect(self.updateSlider)
-                
+                  
     def updateProgressBar(self):
         currentTime = vlc.libvlc_media_player_get_time(self.player)
         minutes1, seconds1 = divmod(currentTime / 1000, 60)
@@ -234,6 +238,13 @@ class App(QMainWindow):
                 self.mySignal.emit(
                     'Album:   ' + ' | '.join(a.title for a in track.albums))
                 self.mySignal.emit('Title:       ' + track.title)
+                cover = track.cover_uri
+                if cover:
+                   text = f'https://{cover.replace("%%", "120x120")}'
+                   data = request.urlopen(text).read()
+                   self.pixmap.loadFromData(data)
+                   self.labelPix.setPixmap(self.pixmap)
+                   self.labelPix.show()
                 try:
                     if track.download_info is None:
                         track.get_download_info()
@@ -312,7 +323,6 @@ class List(QMainWindow):
             background-color: gray;
             """
         )
-        
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 240)
