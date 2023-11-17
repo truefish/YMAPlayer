@@ -13,7 +13,7 @@ import sys
 import vlc
 from urllib import request
 
-TOKEN = 'y0_A***********************************************************'
+TOKEN = 'y0_AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 darktheme = '''
 List{
@@ -51,6 +51,7 @@ class App(QMainWindow):
     mysignal = pyqtSignal(str, name='mySignal')
     progress = pyqtSignal()
     stationNum = 0
+    urlText = "NONE"
 
     def __init__(self):
         super(App, self).__init__()
@@ -125,6 +126,7 @@ class App(QMainWindow):
         self.labelPix.setPixmap(self.pixmap)
         self.labelPix.move(570,10)
         self.labelPix.resize(120,120)
+        self.labelPix.installEventFilter(self)
         
         self.buttonPlay = QPushButton('Play', self)
         self.buttonPlay.move(15, 150)
@@ -171,6 +173,20 @@ class App(QMainWindow):
         self.buttonList.clicked.connect(self.onClickList)
         
         self.slider.valueChanged.connect(self.updateSlider)
+
+    def eventFilter(self, obj, event):
+        if obj == self.labelPix:
+            if event.type() == QEvent.MouseButtonPress:
+                mouseEvent = QMouseEvent(event)
+                if mouseEvent.buttons() == Qt.LeftButton:
+                    self.picture = Picture()
+                    pos = QPoint(self.geometry().x()+720, self.geometry().y())
+                    self.picture.move(pos)
+                    self.picture.show()
+                elif mouseEvent.buttons() == Qt.RightButton:
+                    del self.picture
+
+        return QMainWindow.eventFilter(self, obj, event)
                   
     def updateProgressBar(self):
         currentTime = vlc.libvlc_media_player_get_time(self.player)
@@ -209,6 +225,12 @@ class App(QMainWindow):
     def mySignalHandler(self, data):
         if data == 'NEW':
             self.textbox.clear()
+            if App.urlText != "NONE":
+                self.picture.text = App.urlText
+                data = request.urlopen(self.picture.text).read()
+                self.picture.pixmaps.loadFromData(data)
+                self.picture.labelPicture.setPixmap(self.picture.pixmaps)
+                self.picture.labelPicture.show()
             return
         self.textbox.appendPlainText(data)
 
@@ -228,6 +250,14 @@ class App(QMainWindow):
                     _station_from = _station.id_for_from
                 track = radio.start_radio(_station_id, _station_from)
                 track = radio.play_next()
+                cover = track.cover_uri
+                if cover:
+                   text = f'https://{cover.replace("%%", "120x120")}'
+                   data = request.urlopen(text).read()
+                   self.pixmap.loadFromData(data)
+                   self.labelPix.setPixmap(self.pixmap)
+                   self.labelPix.show()
+                   App.urlText = f'https://{cover.replace("%%", "400x400")}'
                 self.mySignal.emit('NEW')
                 if App.stationNum == len(_stations):
                     self.mySignal.emit('Station:  ' + ' My wave')
@@ -238,13 +268,7 @@ class App(QMainWindow):
                 self.mySignal.emit(
                     'Album:   ' + ' | '.join(a.title for a in track.albums))
                 self.mySignal.emit('Title:       ' + track.title)
-                cover = track.cover_uri
-                if cover:
-                   text = f'https://{cover.replace("%%", "120x120")}'
-                   data = request.urlopen(text).read()
-                   self.pixmap.loadFromData(data)
-                   self.labelPix.setPixmap(self.pixmap)
-                   self.labelPix.show()
+ 
                 try:
                     if track.download_info is None:
                         track.get_download_info()
@@ -306,6 +330,32 @@ class App(QMainWindow):
             self.player.play()
             self.pausePlayer = False
             self.buttonPause.setText('Pause')
+
+class Picture(QMainWindow):
+
+    def __init__(self):
+        super(Picture, self).__init__()
+        self.resize(420, 420)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.round_widget = QWidget(self)
+        self.round_widget.resize(420, 420)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
+        self.labelPicture = QLabel(self)
+        self.pixmaps = QPixmap()
+        self.labelPicture.resize(400,400)
+        self.labelPicture.move(10,10)
+        if App.urlText != "NONE":
+            self.text = App.urlText
+            data = request.urlopen(self.text).read()
+            self.pixmaps.loadFromData(data)
+            self.labelPicture.setPixmap(self.pixmaps)
+            self.labelPicture.show()
 
 class List(QMainWindow):
 
