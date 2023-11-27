@@ -45,6 +45,10 @@ QListWidget{
 QPushButton{
     background-color: blue;
 }
+QMainWindow{
+    border-radius: 10px;
+    background-color: gray;
+}
 '''
             
 class App(QMainWindow):
@@ -367,12 +371,7 @@ class List(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(700, 250)
-        self.round_widget.setStyleSheet(
-            """
-            border-radius: 10px;
-            background-color: gray;
-            """
-        )
+        self.round_widget.setStyleSheet(darktheme)
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 240)
