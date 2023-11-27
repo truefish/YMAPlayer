@@ -82,12 +82,7 @@ class App(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(700, 250)
-        self.round_widget.setStyleSheet(
-            """
-            border-radius: 10px;
-            background-color: gray;
-            """
-        )
+        self.round_widget.setStyleSheet(darktheme)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -344,12 +339,7 @@ class Picture(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(420, 420)
-        self.round_widget.setStyleSheet(
-            """
-            border-radius: 10px;
-            background-color: gray;
-            """
-        )
+        self.round_widget.setStyleSheet(darktheme)
         self.labelPicture = QLabel(self)
         self.pixmaps = QPixmap()
         self.labelPicture.resize(400,400)
