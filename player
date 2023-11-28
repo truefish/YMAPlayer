@@ -7,13 +7,13 @@ from PyQt5.QtCore import *
 from time import sleep
 from radio import Radio
 from yandex_music import Client
-from urllib import request
 
 import threading
 import sys
 import vlc
+from urllib import request
 
-TOKEN = 'y0_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+TOKEN = 'y0_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa'
 
 darktheme = '''
 List{
@@ -45,10 +45,6 @@ QListWidget{
 QPushButton{
     background-color: blue;
 }
-QMainWindow{
-    border-radius: 10px;
-    background-color: gray;
-}
 '''
             
 class App(QMainWindow):
@@ -77,13 +73,17 @@ class App(QMainWindow):
         self.initUI()
 
     def initUI(self):
-
         self.setWindowTitle(self.title)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(700, 250)
-        self.round_widget.setStyleSheet(darktheme)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet(darktheme)
         self.setFixedSize(self.width, self.height)
@@ -95,10 +95,8 @@ class App(QMainWindow):
         self.Geometry.moveCenter(centerPoint)
         self.Position = self.Geometry.topLeft()
         self.move(self.Position)
-
         self.list = List()
         self.oldPos = self.pos()
-
         self.lcd = QLCDNumber(self)
         self.lcd.setSegmentStyle(QLCDNumber.Flat)
         self.lcd.setSmallDecimalPoint(False)
@@ -171,7 +169,7 @@ class App(QMainWindow):
         self.buttonExit.clicked.connect(self.onClickExit)
         self.buttonPause.clicked.connect(self.onClickPause)
         self.buttonList.clicked.connect(self.onClickList)
-        
+
         self.slider.valueChanged.connect(self.updateSlider)
 
     def eventFilter(self, obj, event):
@@ -212,7 +210,12 @@ class App(QMainWindow):
             pos = QPoint(self.geometry().x(), self.geometry().y()+260)
             self.list.move(pos)
             self.list.show()
-
+        isvisible = self.picture.isVisible()
+        if isvisible == True:
+            pos = QPoint(self.geometry().x()+720, self.geometry().y())
+            self.picture.move(pos)
+            self.picture.show()
+            
     def set_position(self):
         pos = self.positionslider.value()
         self.player.set_position(pos / 1000.0)
@@ -237,7 +240,6 @@ class App(QMainWindow):
     def play(self):
         client = Client(TOKEN)
         radio = Radio(client)
-        
         while self.exitApp == False:
             try:
                 _stations = client.rotor_stations_list()
@@ -268,7 +270,6 @@ class App(QMainWindow):
                 self.mySignal.emit(
                     'Album:   ' + ' | '.join(a.title for a in track.albums))
                 self.mySignal.emit('Title:       ' + track.title)
- 
                 try:
                     if track.download_info is None:
                         track.get_download_info()
@@ -279,7 +280,6 @@ class App(QMainWindow):
                 except Exception as e:
                     print('Error:', e)
                     sleep(1)
-
                 media = self.inst.media_new(link)
                 self.player.set_media(media)
                 self.player.play()
@@ -340,7 +340,12 @@ class Picture(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(420, 420)
-        self.round_widget.setStyleSheet(darktheme)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
         self.labelPicture = QLabel(self)
         self.pixmaps = QPixmap()
         self.labelPicture.resize(400,400)
@@ -362,7 +367,12 @@ class List(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.round_widget = QWidget(self)
         self.round_widget.resize(700, 250)
-        self.round_widget.setStyleSheet(darktheme)
+        self.round_widget.setStyleSheet(
+            """
+            border-radius: 10px;
+            background-color: gray;
+            """
+        )
         self.listWidget = QListWidget(self)
         self.listWidget.move(10, 5)
         self.listWidget.resize(680, 240)
