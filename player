@@ -13,7 +13,7 @@ import sys
 import vlc
 from urllib import request
 
-TOKEN = 'y0_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa'
+TOKEN = 'y0_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 darktheme = '''
 List{
@@ -95,7 +95,10 @@ class App(QMainWindow):
         self.Geometry.moveCenter(centerPoint)
         self.Position = self.Geometry.topLeft()
         self.move(self.Position)
+
         self.list = List()
+        self.picture = Picture()
+        
         self.oldPos = self.pos()
         self.lcd = QLCDNumber(self)
         self.lcd.setSegmentStyle(QLCDNumber.Flat)
@@ -177,12 +180,11 @@ class App(QMainWindow):
             if event.type() == QEvent.MouseButtonPress:
                 mouseEvent = QMouseEvent(event)
                 if mouseEvent.buttons() == Qt.LeftButton:
-                    self.picture = Picture()
                     pos = QPoint(self.geometry().x()+720, self.geometry().y())
                     self.picture.move(pos)
                     self.picture.show()
                 elif mouseEvent.buttons() == Qt.RightButton:
-                    del self.picture
+                    self.picture.hide()
 
         return QMainWindow.eventFilter(self, obj, event)
                   
@@ -201,8 +203,6 @@ class App(QMainWindow):
 
     def mouseMoveEvent(self, event):
         delta = QPoint (event.globalPos() - self.oldPos)
-        x = event.x()
-        y = event.y()
         self.move(self.x() + delta.x(), self.y() + delta.y())
         self.oldPos = event.globalPos()
         isvisible = self.list.isVisible()
@@ -280,7 +280,7 @@ class App(QMainWindow):
                 except Exception as e:
                     print('Error:', e)
                     sleep(1)
-                media = self.inst.media_new(link)
+                media = self.inst.media_new(link)#'http://nashe1.hostingradio.ru/nashe-128.mp3')
                 self.player.set_media(media)
                 self.player.play()
                 while True:
